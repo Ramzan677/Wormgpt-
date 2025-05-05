@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WormGPT AI - Android</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        @keyframes pulse {
+            0%, 100% { opacity: 0.5; }
+            50% { opacity: 1; }
+        }
+        .typing-dots {
+            display: inline-flex;
+            gap: 4px;
+        }
+        .typing-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background-color: #6b7280;
+            animation: pulse 1.5s infinite ease-in-out;
+        }
+        .typing-dot:nth-child(1) { animation-delay: 0s; }
+        .typing-dot:nth-child(2) { animation-delay: 0.3s; }
+        .typing-dot:nth-child(3) { animation-delay: 0.6s; }
+        .message-enter {
+            animation: messageEnter 0.3s ease-out;
+        }
+        @keyframes messageEnter {
+            from { transform: translateY(10px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+        /* Android-style scrollbar */
+        ::-webkit-scrollbar {
+            width: 6px;
+        }
+        ::-webkit-scrollbar-thumb {
+            background-color: #4b5563;
+            border-radius: 3px;
+        }
+        /* Android-style input */
+        .android-input {
+            border-radius: 20px;
+            background-color: #374151;
+            border: none;
+            box-shadow: none;
+        }
+        .android-input:focus {
+            outline: none;
+            background-color: #4b5563;
+        }
+        /* Android-style buttons */
+        .android-button {
+            border-radius: 20px;
+            background-color: #3b82f6;
+            color: white;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .android-button:hover {
+            background-color: #2563eb;
+        }
+        /* Android status bar */
+        .status-bar {
+            height: 24px;
+            background-color: #1f2937;
+            color: white;
+            font-size: 12px;
+            padding: 0 16px;
+        }
+    </style>
+</head>
+<body class="bg-gray-900 text-gray-100 min-h-screen flex flex-col">
+    <!-- Android status bar -->
+    <div class="status-bar flex items-center justify-between">
+        <div>12:30</div>
+        <div class="flex space-x-2">
+            <i class="fas fa-signal"></i>
+            <i class="fas fa-wifi"></i>
+            <i class="fas fa-battery-three-quarters"></i>
+        </div>
+    </div>
+
+    <!-- Header -->
+    <div class="px-4 py-3 bg-gray-800 flex items-center justify-between shadow-md">
+        <div class="flex items-center space-x-3">
+            <div class="w-10 h-10 rounded-full bg-gradient-to-r from-purple-600 to-blue-500 flex items-center justify-center">
+                <i class="fas fa-worm text-white"></i>
+            </div>
+            <div>
+                <h1 class="text-lg font-bold bg-gradient-to-r from-purple-400 to-blue-400 bg-clip-text text-transparent">
+                    WormGPT AI
+                </h1>
+                <p class="text-xs text-gray-400">Developed by RAMZAN AHSAN</p>
+            </div>
+        </div>
+        <div class="flex space-x-2">
+            <button class="p-2 rounded-full bg-gray-700 hover:bg-gray-600 transition-colors">
+                <i class="fas fa-search"></i>
+            </button>
+            <button class="p-2 rounded-full bg-gray-700 hover:bg-gray-600 transition-colors">
+                <i class="fas fa-ellipsis-vertical"></i>
+            </button>
+        </div>
+    </div>
+
+    <!-- Chat container -->
+    <div class="flex-1 overflow-hidden flex flex-col">
+        <!-- Chat messages -->
+        <div id="chatbox" class="flex-1 overflow-y-auto p-4 space-y-4 bg-gray-900">
+            <!-- Welcome message -->
+            <div class="message-enter flex">
+                <div class="max-w-xs md:max-w-md lg:max-w-lg px-4 py-3 rounded-xl bg-gray-800">
+                    <div class="font-medium text-purple-300 mb-1">WormGPT</div>
+                    <p>Hello! I'm WormGPT, an AI assistant. How can I help you today?</p>
+                    <div class="mt-2 text-xs text-gray-400">Today at <span id="current-time"></span></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Input area -->
+        <div class="p-4 bg-gray-800 border-t border-gray-700">
+            <div class="flex items-center space-x-2">
+                <button class="p-2 rounded-full bg-gray-700 hover:bg-gray-600 transition-colors">
+                    <i class="fas fa-microphone"></i>
+                </button>
+                <input 
+                    type="text" 
+                    id="userInput" 
+                    placeholder="Type a message..." 
+                    class="flex-1 android-input px-4 py-2 focus:outline-none transition-all"
+                    autofocus
+                >
+                <button class="p-2 rounded-full bg-gray-700 hover:bg-gray-600 transition-colors">
+                    <i class="fas fa-image"></i>
+                </button>
+            </div>
+            <div class="mt-3 flex justify-end">
+                <button 
+                    id="sendButton" 
+                    onclick="sendMessage()"
+                    class="android-button px-6 py-2 flex items-center space-x-2"
+                >
+                    <span>Send</span>
+                    <i class="fas fa-paper-plane"></i>
+                </button>
+            </div>
+            <div class="mt-2 text-xs text-gray-400 flex justify-between">
+                <span id="character-count">0/500</span>
+                <span id="message-count">1 message</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer with social buttons -->
+    <div class="bg-gray-800 py-3 px-4 border-t border-gray-700">
+        <div class="flex justify-around">
+            <a href="https://t.me/Tips0Courses" target="_blank" class="flex flex-col items-center text-gray-300 hover:text-white">
+                <div class="w-10 h-10 rounded-full bg-blue-500 flex items-center justify-center mb-1">
+                    <i class="fab fa-telegram text-xl"></i>
+                </div>
+                <span class="text-xs">Telegram</span>
+            </a>
+            <a href="https://chat.whatsapp.com/LoafyPWMGOv88oElxdwOB8" target="_blank" class="flex flex-col items-center text-gray-300 hover:text-white">
+                <div class="w-10 h-10 rounded-full bg-green-500 flex items-center justify-center mb-1">
+                    <i class="fab fa-whatsapp text-xl"></i>
+                </div>
+                <span class="text-xs">WhatsApp Group</span>
+            </a>
+            <a href="https://whatsapp.com/channel/0029Vb5j7KKBVJl1T9RTk80p" target="_blank" class="flex flex-col items-center text-gray-300 hover:text-white">
+                <div class="w-10 h-10 rounded-full bg-green-600 flex items-center justify-center mb-1">
+                    <i class="fab fa-whatsapp text-xl"></i>
+                </div>
+                <span class="text-xs">WhatsApp Channel</span>
+            </a>
+        </div>
+    </div>
+
+    <script>
+        // DOM elements
+        const chatbox = document.getElementById('chatbox');
+        const userInput = document.getElementById('userInput');
+        const sendButton = document.getElementById('sendButton');
+        const messageCount = document.getElementById('message-count');
+        const characterCount = document.getElementById('character-count');
+        const currentTime = document.getElementById('current-time');
+        
+        // State
+        let isWaitingForResponse = false;
+        let messageCounter = 1; // Starts at 1 for the welcome message
+        
+        // Set current time
+        function updateCurrentTime() {
+            const now = new Date();
+            currentTime.textContent = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+        }
+        updateCurrentTime();
+        setInterval(updateCurrentTime, 60000); // Update every minute
+        
+        // Character counter
+        userInput.addEventListener('input', () => {
+            const count = userInput.value.length;
+            characterCount.textContent = `${count}/500`;
+            if (count > 500) {
+                characterCount.classList.add('text-red-400');
+            } else {
+                characterCount.classList.remove('text-red-400');
+            }
+        });
+        
+        // Function to add a message to the chatbox
+        function addMessage(sender, message, isError = false) {
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message-enter flex ${sender === 'user' ? 'justify-end' : 'justify-start'}`;
+            
+            const messageBubble = document.createElement('div');
+            let bubbleClasses = 'max-w-xs md:max-w-md lg:max-w-lg px-4 py-3 rounded-xl ';
+            
+            if (sender === 'user') {
+                bubbleClasses += 'bg-blue-600 text-white';
+            } else if (isError) {
+                bubbleClasses += 'bg-red-900 text-red-100';
+            } else {
+                bubbleClasses += 'bg-gray-800';
+            }
+            
+            messageBubble.className = bubbleClasses;
+            
+            if (sender !== 'user' && !isError) {
+                const senderName = document.createElement('div');
+                senderName.className = 'font-medium text-purple-300 mb-1';
+                senderName.textContent = 'WormGPT';
+                messageBubble.appendChild(senderName);
+            }
+            
+            const messageText = document.createElement('p');
+            messageText.textContent = message;
+            messageBubble.appendChild(messageText);
+            
+            const timeStamp = document.createElement('div');
+            timeStamp.className = 'mt-2 text-xs text-gray-400';
+            
+            const now = new Date();
+            timeStamp.textContent = `Today at ${now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
+            messageBubble.appendChild(timeStamp);
+            
+            messageDiv.appendChild(messageBubble);
+            chatbox.appendChild(messageDiv);
+            
+            // Update message counter
+            messageCounter++;
+            messageCount.textContent = `${messageCounter} messages`;
+            
+            // Scroll to bottom
+            chatbox.scrollTop = chatbox.scrollHeight;
+        }
+        
+        // Function to show typing indicator
+        function showTypingIndicator() {
+            const typingDiv = document.createElement('div');
+            typingDiv.className = 'message-enter flex justify-start';
+            
+            const typingBubble = document.createElement('div');
+            typingBubble.className = 'max-w-xs md:max-w-md lg:max-w-lg px-4 py-3 rounded-xl bg-gray-800';
+            
+            const typingText = document.createElement('div');
+            typingText.className = 'flex items-center space-x-2';
+            typingText.innerHTML = `
+                <span>WormGPT is typing</span>
+                <div class="typing-dots">
+                    <div class="typing-dot"></div>
+                    <div class="typing-dot"></div>
+                    <div class="typing-dot"></div>
+                </div>
+            `;
+            
+            typingBubble.appendChild(typingText);
+            typingDiv.appendChild(typingBubble);
+            typingDiv.id = 'typing-indicator';
+            chatbox.appendChild(typingDiv);
+            chatbox.scrollTop = chatbox.scrollHeight;
+            
+            return typingDiv;
+        }
+        
+        // Function to hide typing indicator
+        function hideTypingIndicator() {
+            const indicator = document.getElementById('typing-indicator');
+            if (indicator) {
+                indicator.remove();
+            }
+        }
+        
+        // Function to rotate through different CORS proxies
+        function getProxyUrl(targetUrl) {
+            const proxies = [
+                'https://api.allorigins.win/get?url=',
+                'https://corsproxy.io/?',
+                'https://api.codetabs.com/v1/proxy/?quest='
+            ];
+            const randomProxy = proxies[Math.floor(Math.random() * proxies.length)];
+            return randomProxy + encodeURIComponent(targetUrl);
+        }
+        
+        // Function to send a message to WormGPT API
+        async function sendMessage() {
+            const query = userInput.value.trim();
+            if (!query || isWaitingForResponse || query.length > 500) return;
+            
+            isWaitingForResponse = true;
+            sendButton.disabled = true;
+            userInput.disabled = true;
+            
+            addMessage('user', query);
+            userInput.value = '';
+            characterCount.textContent = '0/500';
+            
+            // Show typing indicator
+            const typingIndicator = showTypingIndicator();
+            
+            try {
+                const apiUrl = `https://legendxdata.site/Api/gpt/wormgpt.php?q=${encodeURIComponent(query)}`;
+                const proxyUrl = getProxyUrl(apiUrl);
+                
+                // First try with proxy
+                let response = await fetch(proxyUrl);
+                
+                // If proxy fails, try direct connection (might work if CORS is allowed)
+                if (!response.ok) {
+                    response = await fetch(apiUrl, { mode: 'cors' });
+                }
+                
+                if (!response.ok) {
+                    throw new Error(`API request failed with status ${response.status}`);
+                }
+                
+                hideTypingIndicator();
+                
+                let data;
+                if (proxyUrl.includes('allorigins.win')) {
+                    data = await response.json();
+                    data = JSON.parse(data.contents);
+                } else {
+                    data = await response.json();
+                }
+                
+                addMessage('bot', data.reply || "No reply received from API");
+            } catch (error) {
+                hideTypingIndicator();
+                console.error('API Error:', error);
+                addMessage('bot', `Error: ${error.message} (Please try again)`, true);
+                
+                // Retry automatically after 2 seconds
+                setTimeout(() => {
+                    sendMessage();
+                }, 2000);
+                return;
+            } finally {
+                isWaitingForResponse = false;
+                sendButton.disabled = false;
+                userInput.disabled = false;
+                userInput.focus();
+            }
+        }
+        
+        // Allow pressing Enter to send
+        userInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter' && !isWaitingForResponse) {
+                sendMessage();
+            }
+        });
+    </script>
+<p style="border-radius: 8px; text-align: center; font-size: 12px; color: #fff; margin-top: 16px;position: fixed; left: 8px; bottom: 8px; z-index: 10; background: rgba(0, 0, 0, 0.8); padding: 4px 8px;">Made with <img src="https://enzostvs-deepsite.hf.space/logo.svg" alt="DeepSite Logo" style="width: 16px; height: 16px; vertical-align: middle;display:inline-block;margin-right:3px;filter:brightness(0) invert(1);"><a href="https://enzostvs-deepsite.hf.space" style="color: #fff;text-decoration: underline;" target="_blank" >DeepSite</a> - 🧬 <a href="https://enzostvs-deepsite.hf.space?remix=Ukty/wormgpt" style="color: #fff;text-decoration: underline;" target="_blank" >Remix</a></p></body>
+</html>
